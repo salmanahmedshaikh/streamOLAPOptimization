@@ -741,7 +741,7 @@ void OLAPManager::markVerticesToMaterializeThruOptScheme(int queryID)
     int numVerticesToMaterialize = atoi(cubifyConfigMap[queryID]["MVerticesNum"].c_str());
     int maxStorageNumTuples = atoi(cubifyConfigMap[queryID]["MaxStorageNumTuples"].c_str());
     int IoA = atoi(cubifyConfigMap[queryID]["IoA"].c_str());
-    int readToWriteCostRatio = atoi(cubifyConfigMap[queryID]["ReadToWriteCostRatio"].c_str());
+    float readToWriteCostRatio = atof(cubifyConfigMap[queryID]["ReadToWriteCostRatio"].c_str());
     std::string optMethod = cubifyConfigMap[queryID]["OptMethod"];
     std::string timeGrain = cubifyConfigMap[queryID]["TimeGrain"];
 

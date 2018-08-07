@@ -74,7 +74,7 @@ def setConfigurationFile(outputFile, IoA, MMode, RFMode, windowSize, maxStorage,
     file2.write("OptMethod = MaxStorage" + "\n")
     file2.write("TimeGrain = Second" + "\n")
     file2.write("LatticeOutputVertices = prodID, suppID, promoID, custID, storeID, SalesPersonID" + "\n")
-    file2.write("ReadToWriteCostRatio = 1" + "\n")
+    file2.write("ReadToWriteCostRatio = 1.642442" + "\n")
     file2.close()
 
     append(outputFile, "Approach: StreamOLAP")
