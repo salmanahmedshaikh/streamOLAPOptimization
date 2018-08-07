@@ -35,6 +35,7 @@ src/Operator/CubifyOperator.o: src/Operator/CubifyOperator.cpp \
  src/Operator/../Operator/../Utility/TimeCounterUtility.h \
  src/Operator/../Operator/../OLAP/OLAPManager.h \
  src/Operator/../Operator/../OLAP/../Utility/StreamOLAPOptimization.h \
+ src/Operator/../Operator/../OLAP/../Utility/../Configure/ConfigureManager.h \
  src/Operator/../Operator/../OLAP/MaterializedNode.h \
  src/Operator/../Operator/../OLAP/MaterializedLattice.h \
  src/Operator/../Operator/../OLAP/../OLAP/MaterializedNodeWithRelation.h \

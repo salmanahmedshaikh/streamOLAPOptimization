@@ -14,4 +14,5 @@ src/Utility/StreamOLAPOptimization.o: \
  src/Utility/../Utility/../Common/../BinaryJson/../BinaryJson/../BinaryJson/../BinaryJson/../BinaryJson/atomic_int.h \
  src/Utility/../Utility/../Common/../BinaryJson/../BinaryJson/../BinaryJson/BinaryJsonObjectIterator.h \
  src/Utility/../Utility/../Common/../BinaryJson/../BinaryJson/BinaryInline.h \
- src/Utility/../Utility/../OLAP/OLAPManager.h
+ src/Utility/../Utility/../OLAP/OLAPManager.h \
+ src/Utility/../Utility/../Configure/ConfigureManager.h

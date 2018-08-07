@@ -326,6 +326,20 @@ void OLAPManager::readCubifyConfiguration(std::string configFile, int queryID)
                 //std::cout << "cubifyConfigMap[queryID][MVerticesNum]: " << cubifyConfigMap[0]["MVerticesNum"] << std::endl;
             }
 		}
+
+		if(str.find("ReadToWriteCostRatio") != std::string::npos)
+        {
+            std::size_t pos = str.find('=');
+
+            // if "=" found
+            if(pos != std::string::npos)
+            {
+                std::string readToWriteCostRatio = str.substr(pos+1);
+                boost::trim(readToWriteCostRatio);
+                cubifyConfigMap[queryID]["ReadToWriteCostRatio"] = readToWriteCostRatio;
+                //std::cout << "cubifyConfigMap[queryID][MVerticesNum]: " << cubifyConfigMap[0]["MVerticesNum"] << std::endl;
+            }
+		}
 	}
 }
 
@@ -347,34 +361,34 @@ void OLAPManager::assignFrequency(int queryID, std::string RFMode)
 
     if(RFMode == "Rand")
     {
-		int freqArr[65] = {580, 730, 850, 40, 10, 130, 720, 820, 510, 180, 970, 60, 580, 600, 610, 270, 710, 830, 280, 550, 560, 780, 500, 570, 890, 430, 390, 130, 270, 950, 870, 530, 130, 290, 630, 160, 560, 370, 500, 740, 460, 520, 430, 600, 450, 180, 120, 420, 920, 10, 650, 170, 920, 240, 640, 610, 480, 810, 190, 850, 350, 700, 670, 980, 400}; 
+		int freqArr[65] = {580, 730, 850, 40, 10, 130, 720, 820, 510, 180, 970, 60, 580, 600, 610, 270, 710, 830, 280, 550, 560, 780, 500, 570, 890, 430, 390, 130, 270, 950, 870, 530, 130, 290, 630, 160, 560, 370, 500, 740, 460, 520, 430, 600, 450, 180, 120, 420, 920, 10, 650, 170, 920, 240, 640, 610, 480, 810, 190, 850, 350, 700, 670, 980, 400};
 		for(int i = 0; i < numVertices; i++)
         {
             int randInt = freqArr[i];
             std::stringstream randomIntSS;
             randomIntSS << randInt;
-            refFrequencies.push_back(randomIntSS.str());            
+            refFrequencies.push_back(randomIntSS.str());
         }
-		
+
         /*
         for(int i = 0; i < numVertices; i++)
         {
             int randInt = 1 + (rand() % (int)(maxFrequency));
             std::stringstream randomIntSS;
             randomIntSS << randInt;
-            refFrequencies.push_back(randomIntSS.str());            
+            refFrequencies.push_back(randomIntSS.str());
         }
         */
     }
     else if(RFMode == "AllHigh")
     {
-		int freqArr[65] = {780, 730, 850, 940, 990, 830, 920, 880, 810, 980, 970, 760, 910, 800, 910, 870, 790, 895, 880, 980, 960, 780, 900, 870, 990, 930, 790, 830, 970, 750, 870, 930, 830, 790, 830, 760, 960, 870, 900, 790, 860, 820, 930, 900, 850, 980, 820, 920, 890, 810, 850, 870, 920, 940, 840, 910, 780, 810, 790, 850, 950, 800, 770, 980, 800}; 
+		int freqArr[65] = {780, 730, 850, 940, 990, 830, 920, 880, 810, 980, 970, 760, 910, 800, 910, 870, 790, 895, 880, 980, 960, 780, 900, 870, 990, 930, 790, 830, 970, 750, 870, 930, 830, 790, 830, 760, 960, 870, 900, 790, 860, 820, 930, 900, 850, 980, 820, 920, 890, 810, 850, 870, 920, 940, 840, 910, 780, 810, 790, 850, 950, 800, 770, 980, 800};
 		for(int i = 0; i < numVertices; i++)
         {
             int randInt = freqArr[i];
             std::stringstream randomIntSS;
             randomIntSS << randInt;
-            refFrequencies.push_back(randomIntSS.str());            
+            refFrequencies.push_back(randomIntSS.str());
         }
         /*
         for(int i = 0; i < numVertices; i++)
@@ -388,13 +402,13 @@ void OLAPManager::assignFrequency(int queryID, std::string RFMode)
     }
     else if(RFMode == "AllLow")
     {
-		int freqArr[65] = {180, 30, 150, 240, 100, 130, 220, 120, 10, 180, 170, 60, 210, 100, 210, 120, 110, 230, 80, 150, 160, 80, 200, 170, 90, 130, 90, 230, 170, 50, 170, 30, 130, 90, 130, 160, 60, 170, 100, 240, 160, 120, 230, 200, 150, 180, 20, 220, 30, 10, 50, 170, 120, 240, 140, 110, 80, 180, 190, 50, 250, 200, 70, 180, 200}; 
+		int freqArr[65] = {180, 30, 150, 240, 100, 130, 220, 120, 10, 180, 170, 60, 210, 100, 210, 120, 110, 230, 80, 150, 160, 80, 200, 170, 90, 130, 90, 230, 170, 50, 170, 30, 130, 90, 130, 160, 60, 170, 100, 240, 160, 120, 230, 200, 150, 180, 20, 220, 30, 10, 50, 170, 120, 240, 140, 110, 80, 180, 190, 50, 250, 200, 70, 180, 200};
 		for(int i = 0; i < numVertices; i++)
         {
             int randInt = freqArr[i];
             std::stringstream randomIntSS;
             randomIntSS << randInt;
-            refFrequencies.push_back(randomIntSS.str());            
+            refFrequencies.push_back(randomIntSS.str());
         }
         /*
         for(int i = 0; i < numVertices; i++)
@@ -408,14 +422,14 @@ void OLAPManager::assignFrequency(int queryID, std::string RFMode)
     }
     else if(RFMode == "CoarseHigh")
     {
-		int freqArr[65] = {990, 980, 970, 950, 930, 920, 910, 900, 890, 880, 870, 860, 850, 830, 810, 800, 790, 780, 750, 730, 700, 680, 650, 630, 620, 600, 590, 570, 550, 530, 500, 480, 430, 420, 410, 400, 390, 370, 360, 340, 330, 320, 310, 300, 290, 280, 270, 260, 250, 240, 230, 220, 210, 200, 180, 170, 160, 150, 140, 130, 120, 110, 100, 90, 40}; 
+		int freqArr[65] = {990, 980, 970, 950, 930, 920, 910, 900, 890, 880, 870, 860, 850, 830, 810, 800, 790, 780, 750, 730, 700, 680, 650, 630, 620, 600, 590, 570, 550, 530, 500, 480, 430, 420, 410, 400, 390, 370, 360, 340, 330, 320, 310, 300, 290, 280, 270, 260, 250, 240, 230, 220, 210, 200, 180, 170, 160, 150, 140, 130, 120, 110, 100, 90, 40};
 		for(int i = 0; i < numVertices; i++)
         {
             int randInt = freqArr[i];
             std::stringstream randomIntSS;
             randomIntSS << randInt;
-            refFrequencies.push_back(randomIntSS.str());            
-        }        
+            refFrequencies.push_back(randomIntSS.str());
+        }
         /*
         double randMin = coarseHighRandMin;
         for(int i = 0; i < numVertices; i++)
@@ -431,13 +445,13 @@ void OLAPManager::assignFrequency(int queryID, std::string RFMode)
     }
     else if(RFMode == "FineHigh")
     {
-		int freqArr[65] = {40, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 310, 320, 330, 340, 360, 370, 390, 400, 410, 420, 430, 480, 500, 530, 550, 570, 590, 600, 620, 630, 650, 680, 700, 730, 750, 780, 790, 800, 810, 830, 850, 860, 870, 880, 890, 900, 910, 920, 930, 950, 970, 980, 990}; 
+		int freqArr[65] = {40, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 310, 320, 330, 340, 360, 370, 390, 400, 410, 420, 430, 480, 500, 530, 550, 570, 590, 600, 620, 630, 650, 680, 700, 730, 750, 780, 790, 800, 810, 830, 850, 860, 870, 880, 890, 900, 910, 920, 930, 950, 970, 980, 990};
 		for(int i = 0; i < numVertices; i++)
         {
             int randInt = freqArr[i];
             std::stringstream randomIntSS;
             randomIntSS << randInt;
-            refFrequencies.push_back(randomIntSS.str());            
+            refFrequencies.push_back(randomIntSS.str());
         }
         /*
         double randMin = fineHighRandMin;
@@ -454,15 +468,15 @@ void OLAPManager::assignFrequency(int queryID, std::string RFMode)
     }
     else if(RFMode == "OneDimHigh")
     {
-		int freqArr[65] = {30, 15, 20, 40, 10, 30, 15, 20, 40, 10, 30, 15, 20, 40, 10, 30, 15, 20, 40, 10, 30, 15, 20, 40, 10, 30, 15, 20, 800, 10, 30, 15, 20, 40, 10, 30, 15, 20, 40, 10, 30, 15, 20, 40, 10, 30, 15, 20, 40, 10, 30, 15, 20, 40, 10, 30, 15, 20, 40, 10, 30, 15, 20, 40, 10}; 
+		int freqArr[65] = {30, 15, 20, 40, 10, 30, 15, 20, 40, 10, 30, 15, 20, 40, 10, 30, 15, 20, 40, 10, 30, 15, 20, 40, 10, 30, 15, 20, 800, 10, 30, 15, 20, 40, 10, 30, 15, 20, 40, 10, 30, 15, 20, 40, 10, 30, 15, 20, 40, 10, 30, 15, 20, 40, 10, 30, 15, 20, 40, 10, 30, 15, 20, 40, 10};
 		for(int i = 0; i < numVertices; i++)
         {
             int randInt = freqArr[i];
             std::stringstream randomIntSS;
             randomIntSS << randInt;
-            refFrequencies.push_back(randomIntSS.str());            
+            refFrequencies.push_back(randomIntSS.str());
         }
-        
+
 		/*
         for(int i = 0; i < numVertices; i++)
         {
@@ -727,9 +741,9 @@ void OLAPManager::markVerticesToMaterializeThruOptScheme(int queryID)
     int numVerticesToMaterialize = atoi(cubifyConfigMap[queryID]["MVerticesNum"].c_str());
     int maxStorageNumTuples = atoi(cubifyConfigMap[queryID]["MaxStorageNumTuples"].c_str());
     int IoA = atoi(cubifyConfigMap[queryID]["IoA"].c_str());
+    int readToWriteCostRatio = atoi(cubifyConfigMap[queryID]["ReadToWriteCostRatio"].c_str());
     std::string optMethod = cubifyConfigMap[queryID]["OptMethod"];
-
-    //numVerticesMaterialized = numVerticesToMaterialize;
+    std::string timeGrain = cubifyConfigMap[queryID]["TimeGrain"];
 
     // Marking the most granular vertex to materialize
     for(latticeVerticesIt = latticeVertices.begin(); latticeVerticesIt != latticeVertices.end(); latticeVerticesIt++)
@@ -742,11 +756,43 @@ void OLAPManager::markVerticesToMaterializeThruOptScheme(int queryID)
         }
     }
 
+    int numOfChunks = getNumOfChunks(IoA, timeGrain);
+
+    if(numOfChunks == -1)
+    {
+        std::cout << "OLAPManager: Invalid number of chunks." << std::endl;
+        assert(false);
+        exit(0);
+    }
 
     //optMode numVertices | maxStorage
-    StreamOLAPOptimization::getInstance()->getOptimizedVerticesToMaterialize(latticeVertices, 1000, 1000, optMethod, maxStorageNumTuples, numVerticesToMaterialize, queryID, IoA);
+    StreamOLAPOptimization::getInstance()->getOptimizedVerticesToMaterialize(latticeVertices, 300, 1000, optMethod, maxStorageNumTuples, numVerticesToMaterialize, queryID, IoA, readToWriteCostRatio, numOfChunks);
     // Testing materialized nodes
     //printVertices();
+}
+
+int OLAPManager::getNumOfChunks(int IoA, std::string timeGrain)
+{
+    int numOfChunks = -1;
+
+    if (timeGrain == "Second" || timeGrain == "second")
+    {
+        numOfChunks = IoA;
+    }
+    else if (timeGrain == "Minute" || timeGrain == "minute")
+    {
+        numOfChunks = ceil ((IoA*1.0)/60);
+    }
+    else if (timeGrain == "Hour" || timeGrain == "hour")
+    {
+        numOfChunks = ceil ((IoA*1.0)/(60*60));
+    }
+    else
+    {
+        assert(false);
+    }
+
+    return numOfChunks;
 }
 
 void OLAPManager::printVertices()

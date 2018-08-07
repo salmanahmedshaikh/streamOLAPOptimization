@@ -13,4 +13,5 @@ src/OLAP/OLAPManager.o: src/OLAP/OLAPManager.cpp \
  src/OLAP/../OLAP/../Utility/../Common/../BinaryJson/../BinaryJson/../BinaryJson/../BinaryJson/../BinaryJson/../BinaryJson/BinaryJsonTypes.h \
  src/OLAP/../OLAP/../Utility/../Common/../BinaryJson/../BinaryJson/../BinaryJson/../BinaryJson/../BinaryJson/atomic_int.h \
  src/OLAP/../OLAP/../Utility/../Common/../BinaryJson/../BinaryJson/../BinaryJson/BinaryJsonObjectIterator.h \
- src/OLAP/../OLAP/../Utility/../Common/../BinaryJson/../BinaryJson/BinaryInline.h
+ src/OLAP/../OLAP/../Utility/../Common/../BinaryJson/../BinaryJson/BinaryInline.h \
+ src/OLAP/../OLAP/../Utility/../Configure/ConfigureManager.h

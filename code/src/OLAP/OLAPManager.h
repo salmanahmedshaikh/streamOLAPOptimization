@@ -66,6 +66,8 @@ class OLAPManager:private boost::noncopyable
         std::map<vertexInfo, std::vector<std::string> > getLatticeVertices(int queryID);
         int getNumOfMaterializedVertices(int queryID);
 
+        int getNumOfChunks(int IoA, std::string timeGrain);
+
         std::string getConfigValue(int queryID, std::string key);
         void getConfigValue(int queryID, std::string key, std::vector<std::string>& configValueVector);
         void getConfigValue(int queryID, std::string key, std::vector< std::vector<std::string> >& configValueVector);
@@ -86,6 +88,8 @@ class OLAPManager:private boost::noncopyable
         void printVertices();
         //std::vector<std::string> getCubifyDimensions();
         //std::vector< std::vector<std::string> > getCubifyMVertices();
+
+
 
     protected:
     private:

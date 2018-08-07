@@ -29,4 +29,5 @@ src/OLAP/MaterializedLattice.o: src/OLAP/MaterializedLattice.cpp \
  src/OLAP/../OLAP/../OLAP/../Utility/TimestampGenerator.h \
  src/OLAP/../OLAP/../OLAP/../Utility/DocumentIdentifierGenerator.h \
  src/OLAP/../OLAP/../OLAP/OLAPManager.h \
- src/OLAP/../OLAP/../OLAP/../Utility/StreamOLAPOptimization.h
+ src/OLAP/../OLAP/../OLAP/../Utility/StreamOLAPOptimization.h \
+ src/OLAP/../OLAP/../OLAP/../Utility/../Configure/ConfigureManager.h

@@ -61,6 +61,7 @@ src/Query/QueryIntermediateRepresentationInterpreter.o: \
  src/Query/../Operator/../Utility/TimeCounterUtility.h \
  src/Query/../Operator/../OLAP/OLAPManager.h \
  src/Query/../Operator/../OLAP/../Utility/StreamOLAPOptimization.h \
+ src/Query/../Operator/../OLAP/../Utility/../Configure/ConfigureManager.h \
  src/Query/../Operator/../OLAP/MaterializedNode.h \
  src/Query/../Operator/../OLAP/MaterializedLattice.h \
  src/Query/../Operator/../OLAP/../OLAP/MaterializedNodeWithRelation.h \
@@ -84,5 +85,4 @@ src/Query/QueryIntermediateRepresentationInterpreter.o: \
  src/Query/../Server/../Plan/PlanManager.h \
  src/Query/../Server/../Plan/QueryPlanTree.h \
  src/Query/../Server/../Wrapper/WrapperManager.h \
- src/Query/../Configure/ConfigureManager.h \
  src/Query/../Utility/QueryIdentityGenerator.h

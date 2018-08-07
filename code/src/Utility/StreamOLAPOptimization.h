@@ -11,6 +11,7 @@
 //#include "../OLAP/OLAPManager.h"
 #include "../Common/Types.h"
 #include "../OLAP/OLAPManager.h"
+#include "../Configure/ConfigureManager.h"
 
 
 //struct vertexInfo; // Forward decl
@@ -23,8 +24,12 @@ class StreamOLAPOptimization
         //void getNOptimizedVertices(std::map<vertexInfo, std::vector<std::string> > &latticeVertices, int queryWindowSize, int numVerticesToMaterialize, std::vector<vertexInfo> &tmpMVertices, vertexInfo finestVertex);
         void getNOptimizedVertices(std::map<vertexInfo, std::vector<std::string> > &latticeVertices, int streamArrivalRate, int queryWindowSize, int numVerticesToMaterialize, std::vector<vertexInfo> &tmpMVertices, vertexInfo finestVertex);
         //void getMaxStorageOptimizedVertices(std::map<vertexInfo, std::vector<std::string> > &latticeVertices, int queryWindowSize, int maxStorageNumTuples, std::vector<vertexInfo> &tmpMVertices, vertexInfo finestVertex);
-        void getMaxStorageOptimizedVertices(std::map<vertexInfo, std::vector<std::string> > &latticeVertices, int streamArrivalRate, int queryWindowSize, int maxStorageNumTuples, std::vector<vertexInfo> &tmpMVertices, vertexInfo finestVertex, int IoA);
+        void getMaxStorageOptimizedVertices(std::map<vertexInfo, std::vector<std::string> > &latticeVertices, int streamArrivalRate, int queryWindowSize, int maxStorageNumTuples, std::vector<vertexInfo> &tmpMVertices, vertexInfo finestVertex, int IoA, double readToWriteCostRatio, int numOfChunks);
         double getCandidVertexCost(std::map<vertexInfo, std::vector<std::string> > &latticeVertices, std::vector<vertexInfo> &tmpMVertices, int streamArrivalRate, vertexInfo finestVertex, int IoA);
+
+        double getInsertionCost(std::vector<vertexInfo> &tmpMVertices, int streamArrivalRate, vertexInfo finestVertex, int IoA, double readToWriteCostRatio, int numOfChunks);
+        double getDeletionCost(int streamArrivalRate, int numOfMaterializedVertices);
+        double getQueryingCost(std::map<vertexInfo, std::vector<std::string> > &latticeVertices, std::vector<vertexInfo> &tmpMVertices, int streamArrivalRate, vertexInfo finestVertex, int IoA, double readToWriteCostRatio);
 
         std::map<vertexInfo, std::vector<std::string> >::iterator latticeVerticesIt;
         std::map<vertexInfo, std::vector<std::string> >::iterator latticeVerticesItt;
@@ -40,12 +45,12 @@ class StreamOLAPOptimization
         static StreamOLAPOptimization* getInstance();
 
         // optMode = numVertices or maxStorage
-        void getOptimizedVerticesToMaterialize(std::map<vertexInfo, std::vector<std::string> > &latticeVertices, int streamArrivalRate, int queryWindowSize, std::string optMode, int maxStorageNumTuples, int numVerticesToMaterialize, int queryID, int IoA);
+        void getOptimizedVerticesToMaterialize(std::map<vertexInfo, std::vector<std::string> > &latticeVertices, int streamArrivalRate, int queryWindowSize, std::string optMode, int maxStorageNumTuples, int numVerticesToMaterialize, int queryID, int IoA, double readToWriteCostRatio, int numOfChunks);
         double getVertexStorageCost(int windowSizeNumTuples, int vertexSizeNumTuples, int finestVertexSizeNumTuples, int tupleSizeBytes);
         double getQueryingCostFromMVertex(int windowSizeNumTuples, int MVertexSizeNumTuples, int finestVertexSizeNumTuples, int queryingVertxeRefFrequency);
         //double getUpdateAndQueryingCost(int streamArrivalRate, int MVertexSizeNumTuples, int finestVertexNumTuples, int queryingVertexNumTuples, int queryingVertxeRefFrequency, bool isQueriedNodeMaterialized, int IoA);
         double getUpdateAndQueryingCost(int streamArrivalRate, int MVertexSizeNumTuples, int MVertexSizeDims, int finestVertexNumTuples, int finestVertexDims, int queryingVertexNumTuples, int queryingVertexDims,  int queryingVertxeRefFrequency, bool isQueriedNodeMaterialized, int IoA);
-        
+
 	bool containAllDimensions(std::vector<std::string>& materializedVertex, std::vector<std::string>& queriedVertex);
         std::vector<std::string> getDimensionVectorByVertexID(std::map<vertexInfo, std::vector<std::string> > &latticeVertices, int vertexID);
 };

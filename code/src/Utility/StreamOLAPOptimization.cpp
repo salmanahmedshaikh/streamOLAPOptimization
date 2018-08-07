@@ -40,7 +40,7 @@ StreamOLAPOptimization* StreamOLAPOptimization::getInstance()
 	 return streamOLAPOptimization;
  }
 
- void StreamOLAPOptimization::getOptimizedVerticesToMaterialize(std::map<vertexInfo, std::vector<std::string> > &latticeVertices, int streamArrivalRate, int queryWindowSize, std::string optMethod, int maxStorageNumTuples, int numVerticesToMaterialize, int queryID, int IoA)
+ void StreamOLAPOptimization::getOptimizedVerticesToMaterialize(std::map<vertexInfo, std::vector<std::string> > &latticeVertices, int streamArrivalRate, int queryWindowSize, std::string optMethod, int maxStorageNumTuples, int numVerticesToMaterialize, int queryID, int IoA, double readToWriteCostRatio, int numOfChunks)
  {
     std::vector<vertexInfo> tmpMVertices;
     vertexInfo finestVertex;
@@ -74,7 +74,7 @@ StreamOLAPOptimization* StreamOLAPOptimization::getInstance()
     }
     else if (optMethod == "MaxStorage") // selection of nodes to be materialized is based on max available storage
     {
-        getMaxStorageOptimizedVertices(latticeVertices, streamArrivalRate, queryWindowSize, maxStorageNumTuples, tmpMVertices, finestVertex, IoA);
+        getMaxStorageOptimizedVertices(latticeVertices, streamArrivalRate, queryWindowSize, maxStorageNumTuples, tmpMVertices, finestVertex, IoA, readToWriteCostRatio, numOfChunks);
     }
     else
     {
@@ -181,7 +181,7 @@ StreamOLAPOptimization* StreamOLAPOptimization::getInstance()
     //}
  }
 
- void StreamOLAPOptimization::getMaxStorageOptimizedVertices(std::map<vertexInfo, std::vector<std::string> > &latticeVertices, int streamArrivalRate, int queryWindowSize, int maxStorageNumTuples, std::vector<vertexInfo> &tmpMVertices, vertexInfo finestVertex, int IoA)
+ void StreamOLAPOptimization::getMaxStorageOptimizedVertices(std::map<vertexInfo, std::vector<std::string> > &latticeVertices, int streamArrivalRate, int queryWindowSize, int maxStorageNumTuples, std::vector<vertexInfo> &tmpMVertices, vertexInfo finestVertex, int IoA, double readToWriteCostRatio, int numOfChunks)
  {
     int storageConsumed = 0;
     if(maxStorageNumTuples <= 0) // no stoarge for materialization
@@ -194,7 +194,7 @@ StreamOLAPOptimization* StreamOLAPOptimization::getInstance()
         int minCandidVertexID = -1;
         vertexInfo vertexWSoFarMinQueryingCost;
 
-        //Select a vertex once at a time (greedy way) to check if it results in reduction in computation cost
+        //Select a candidate vertex once at a time (greedy way) to check if it results in reduction in computation cost
         for(latticeVerticesIt = latticeVertices.begin(); latticeVerticesIt != latticeVertices.end(); latticeVerticesIt++)
         {
             // Finding the IDs which have been chosen for materialization
@@ -228,8 +228,17 @@ StreamOLAPOptimization* StreamOLAPOptimization::getInstance()
                 tmpMVertices.push_back(latticeVerticesIt->first);
             }
 
-            double candidVertexCost = getCandidVertexCost(latticeVertices, tmpMVertices, streamArrivalRate, finestVertex, IoA);
-            //std::cout << candidVertexCost << std::endl;
+            //New Start
+            double insertionCost = getInsertionCost(tmpMVertices, streamArrivalRate, finestVertex, IoA, readToWriteCostRatio, numOfChunks);
+            double deletionCost = getDeletionCost(streamArrivalRate, tmpMVertices.size());
+            double queryingCost = getQueryingCost(latticeVertices, tmpMVertices, streamArrivalRate, finestVertex, IoA, readToWriteCostRatio);
+
+            double candidVertexCost = insertionCost + deletionCost + queryingCost;
+            //New End
+
+            //double candidVertexCost = computeCandidVertexCost(latticeVertices, tmpMVertices, streamArrivalRate, finestVertex, IoA);
+            //double candidVertexCost = getCandidVertexCost(latticeVertices, tmpMVertices, streamArrivalRate, finestVertex, IoA);
+            //std::cout << "candidVertexCost " << candidVertexCost << std::endl;
 
             if(candidVertexCost < minCandidVertexCost)
             {
@@ -249,6 +258,8 @@ StreamOLAPOptimization* StreamOLAPOptimization::getInstance()
             VIDsForM.push_back(minCandidVertexID);
             VIDsToIgnore.push_back(minCandidVertexID);
             storageConsumed += vertexWSoFarMinQueryingCost.vRows;
+
+            //std::cout << "minCandidVertexCost " << minCandidVertexCost << std::endl;
         }
 
         //Testing loop
@@ -265,10 +276,65 @@ StreamOLAPOptimization* StreamOLAPOptimization::getInstance()
     }
  }
 
+
+ double StreamOLAPOptimization::getQueryingCost(std::map<vertexInfo, std::vector<std::string> > &latticeVertices, std::vector<vertexInfo> &tmpMVertices, int streamArrivalRate, vertexInfo finestVertex, int IoA, double readToWriteCostRatio)
+ {
+     double totalQueryingCost = 0;
+     int systemExecutionSecond = atoi(ConfigureManager::getInstance()->getConfigureValue("SystemExecSeconds").c_str());
+
+     for(latticeVerticesItt = latticeVertices.begin(); latticeVerticesItt != latticeVertices.end(); latticeVerticesItt++)
+     {
+         // Finding the best materialized vertex (with min queryingCost) to answer the query
+        for(tmpMVerticesIt = tmpMVertices.begin(); tmpMVerticesIt != tmpMVertices.end(); tmpMVerticesIt++)
+        {
+            std::vector<std::string> MVertexDimensionVector = getDimensionVectorByVertexID(latticeVertices, (*tmpMVerticesIt).vertexID);
+            //if materialized vertex contains all the dimensions only then it can answer the query
+            if(containAllDimensions(MVertexDimensionVector, latticeVerticesItt->second))
+            {
+               //Todo: Shall we consider tuple size? ((*tmpMVerticesIt).vRows * 1.0 * (*tmpMVerticesIt).level * 1.0)/(finestVertex.vRows * 1.0 * finestVertex.level * 1.0);
+               //aggregationRatio: How much does a materialized vertex is aggregated
+               double aggregationRatio = ((*tmpMVerticesIt).vRows * 1.0)/(finestVertex.vRows * 1.0);
+               // IoA : Interval of Analysis in number of seconds
+               double numberOfVertexRows = (streamArrivalRate * 1.0) * IoA * aggregationRatio * 1.0 * ( (*tmpMVerticesIt).level + 1); // ((*tmpMVerticesIt).level + 1) is added to take into consideration the tuple size
+               double refFrequency = (latticeVerticesItt->first.refFrequency * 1.0) / systemExecutionSecond;
+               double queryingCost = refFrequency * numberOfVertexRows;
+
+               totalQueryingCost += queryingCost;
+            }
+        }
+
+     }
+     return (readToWriteCostRatio * totalQueryingCost);
+ }
+
+ double StreamOLAPOptimization::getDeletionCost(int streamArrivalRate, int numOfMaterializedVertices)
+ {
+     return streamArrivalRate * numOfMaterializedVertices;
+ }
+
+ double StreamOLAPOptimization::getInsertionCost(std::vector<vertexInfo> &tmpMVertices, int streamArrivalRate, vertexInfo finestVertex, int IoA, double readToWriteCostRatio, int numOfChunks)
+ {
+     double totalInsertionCost = 0;
+
+     for(tmpMVerticesIt = tmpMVertices.begin(); tmpMVerticesIt != tmpMVertices.end(); tmpMVerticesIt++)
+        {
+           //Todo: Shall we consider tuple size? ((*tmpMVerticesIt).vRows * 1.0 * (*tmpMVerticesIt).level * 1.0)/(finestVertex.vRows * 1.0 * finestVertex.level * 1.0);
+           //aggregationRatio: How much does a materialized vertex is aggregated
+           double aggregationRatio = ((*tmpMVerticesIt).vRows * 1.0)/(finestVertex.vRows * 1.0);
+           //double aggregationRatio = ((*tmpMVerticesIt).vRows * 1.0 * (*tmpMVerticesIt).level * 1.0)/(finestVertex.vRows * 1.0 * finestVertex.level * 1.0);
+           // IoA : Interval of Analysis in number of seconds
+           double numberOfVertexRows = (streamArrivalRate * 1.0) * IoA * aggregationRatio * 1.0 * ( (*tmpMVerticesIt).level + 1); // ((*tmpMVerticesIt).level + 1) is added to take into consideration the tuple size
+
+           totalInsertionCost += readToWriteCostRatio * 1.0 * streamArrivalRate * 1.0 * (numberOfVertexRows/(2*numOfChunks)) + streamArrivalRate * 1.0;
+        }
+
+        return totalInsertionCost;
+ }
+
  double StreamOLAPOptimization::getCandidVertexCost(std::map<vertexInfo, std::vector<std::string> > &latticeVertices, std::vector<vertexInfo> &tmpMVertices, int streamArrivalRate, vertexInfo finestVertex, int IoA)
  {
-    double totalQueryingCost = 0;
-    // Iterating through all the vertices as queries to find the querying cost.
+    double totalCost = 0;
+    // Iterating through all the vertices as queries to find the total cost.
     for(latticeVerticesItt = latticeVertices.begin(); latticeVerticesItt != latticeVertices.end(); latticeVerticesItt++)
     {
         double minPerNodeQueryingCost = DBL_MAX;
@@ -281,20 +347,22 @@ StreamOLAPOptimization* StreamOLAPOptimization::getInstance()
             if(containAllDimensions(MVertexDimensionVector, latticeVerticesItt->second))
             {
                 //std::cout << "Materialized lattice vertex which can answer the query (latticeVerticesItt): " << (*tmpMVerticesIt).vertexID << std::endl;
-                double queryingCost = 0;
+                double tmpPerNodeQueryingCost = 0;
                 bool isQueriedNodeMaterialized = false;
                 // If querying node (latticeVerticesItt) is materialized
                 if(latticeVerticesItt->first.vertexID == (*tmpMVerticesIt).vertexID)
                     isQueriedNodeMaterialized = true;
 
                 //double queryingCost = getQueryingCostFromMVertex(queryWindowSize, (*tmpMVerticesIt).vRows, finestVertex.vRows, latticeVerticesItt->first.refFrequency);
-                //queryingCost = getUpdateAndQueryingCost(streamArrivalRate, (*tmpMVerticesIt).vRows, finestVertex.vRows, latticeVerticesItt->first.vRows, latticeVerticesItt->first.refFrequency, isQueriedNodeMaterialized, IoA);
-                queryingCost = getUpdateAndQueryingCost(streamArrivalRate, (*tmpMVerticesIt).vRows, (*tmpMVerticesIt).level, finestVertex.vRows, finestVertex.level, latticeVerticesItt->first.vRows, latticeVerticesItt->first.level, latticeVerticesItt->first.refFrequency, isQueriedNodeMaterialized, IoA);
-                
-		//std::cout << "(*tmpMVerticesIt).level: " << (*tmpMVerticesIt).level << ", finestVertex.level: " << finestVertex.level << ", latticeVerticesItt->first.level: " << latticeVerticesItt->first.level << std::endl;
-//std::cout << "queryingCost of node ID " << latticeVerticesItt->first.vertexID << " from nodeID " << (*tmpMVerticesIt).vertexID << ", is: " << queryingCost << std::endl;
+                //double queryingCost = getUpdateAndQueryingCost(streamArrivalRate, (*tmpMVerticesIt).vRows, finestVertex.vRows, latticeVerticesItt->first.vRows, latticeVerticesItt->first.refFrequency, isQueriedNodeMaterialized, IoA);
+                //getUpdateAndQueryingCost(int streamArrivalRate, int MVertexSizeNumTuples, int MVertexDims, int finestVertexNumTuples, int finestVertexDims, int queryingVertexNumTuples, int queryingVertexDims,  int queryingVertxeRefFrequency, bool isQueriedNodeMaterialized, int IoA)
 
-                if(queryingCost < minPerNodeQueryingCost)
+                double queryingCost = getUpdateAndQueryingCost(streamArrivalRate, (*tmpMVerticesIt).vRows, (*tmpMVerticesIt).level, finestVertex.vRows, finestVertex.level, latticeVerticesItt->first.vRows, latticeVerticesItt->first.level, latticeVerticesItt->first.refFrequency, isQueriedNodeMaterialized, IoA);
+
+                //std::cout << "(*tmpMVerticesIt).level: " << (*tmpMVerticesIt).level << ", finestVertex.level: " << finestVertex.level << ", latticeVerticesItt->first.level: " << latticeVerticesItt->first.level << std::endl;
+                //std::cout << "queryingCost of node ID " << latticeVerticesItt->first.vertexID << " from nodeID " << (*tmpMVerticesIt).vertexID << ", is: " << queryingCost << std::endl;
+
+                if(tmpPerNodeQueryingCost < minPerNodeQueryingCost)
                 {
                     minPerNodeQueryingCost = queryingCost;
                 }
@@ -302,12 +370,14 @@ StreamOLAPOptimization* StreamOLAPOptimization::getInstance()
         }
 
         //std::cout << "minPerNodeQueryingCost " << minPerNodeQueryingCost << std::endl;
-        totalQueryingCost += minPerNodeQueryingCost;
-        //std::cout << "totalQueryingCost " << totalQueryingCost << std::endl;
+        totalCost += minPerNodeQueryingCost;
+        //std::cout << "totalCost " << totalCost << std::endl;
     }
 
-    return totalQueryingCost;
+    return totalCost;
  }
+
+
 
  /*
  void StreamOLAPOptimization::getMaxStorageOptimizedVertices(std::map<vertexInfo, std::vector<std::string> > &latticeVertices, int streamArrivalRate, int queryWindowSize, int maxStorageNumTuples, std::vector<vertexInfo> &tmpMVertices, vertexInfo finestVertex, int IoA)
@@ -486,9 +556,46 @@ StreamOLAPOptimization* StreamOLAPOptimization::getInstance()
     }
  }
 
-// double StreamOLAPOptimization::getUpdateAndQueryingCost(int streamArrivalRate, int MVertexSizeNumTuples, int finestVertexNumTuples, int queryingVertexNumTuples, int queryingVertxeRefFrequency, bool isQueriedNodeMaterialized, int IoA)
- double StreamOLAPOptimization::getUpdateAndQueryingCost(int streamArrivalRate, int MVertexSizeNumTuples, int MVertexDims, int finestVertexNumTuples, int finestVertexDims, int queryingVertexNumTuples, int queryingVertexDims,  int queryingVertxeRefFrequency, bool isQueriedNodeMaterialized, int IoA)
- 
+double StreamOLAPOptimization::getUpdateAndQueryingCost(int streamArrivalRate, int MVertexSizeNumTuples, int MVertexDims, int finestVertexNumTuples, int finestVertexDims, int queryingVertexNumTuples, int queryingVertexDims,  int queryingVertxeRefFrequency, bool isQueriedNodeMaterialized, int IoA)
+
+{
+
+
+    int queryingCostCoefficient;
+    if(isQueriedNodeMaterialized)
+        queryingCostCoefficient = 1;
+    else
+        queryingCostCoefficient = 3;
+
+
+    double updateCostCoefficient = 0.5;
+
+    double alpha = (queryingVertexNumTuples * 1.0 * (queryingVertexDims + 1)) / (finestVertexNumTuples * 1.0 * (finestVertexDims + 1)); // +1 for fact attribute
+    double insertionCost = (streamArrivalRate * 1.0) * ( ( (streamArrivalRate * 1.0) * alpha) / 2.0 );
+    double deletionCost = (streamArrivalRate * 1.0) * (alpha * 1.0);
+    double queryingCost = ( (queryingVertxeRefFrequency * 1.0) * IoA * (streamArrivalRate * 1.0) * (MVertexSizeNumTuples * 1.0 * (MVertexDims + 1)) ) / (finestVertexNumTuples * 1.0 * (finestVertexDims + 1));
+
+    //std::cout << "alpha " << alpha << "| insertionCost " << insertionCost << "| deletionCost " << deletionCost << "| queryingCost " << queryingCost << std::endl;
+    double updateAndQueryingCost = updateCostCoefficient * ( insertionCost + deletionCost) +  (1 - updateCostCoefficient) * queryingCost * queryingCostCoefficient;
+
+    //double queryingCost = ( 2*streamArrivalRate*streamArrivalRate*queryingVertexNumTuples*1.0 )/( finestVertexNumTuples*1.0 ) + ( queryingVertxeRefFrequency*1.0 * (queryingCostCoefficient * MVertexSizeNumTuples) );
+    //double queryingCost = ( (streamArrivalRate*1.0) * log(MVertexSizeNumTuples*1.0) ) + ( queryingVertxeRefFrequency*1.0 * (queryingCostCoefficient * MVertexSizeNumTuples) );
+    //double queryingCost = (queryingVertxeRefFrequency * 1.0) * (queryingCostCoefficient * MVertexSizeNumTuples);
+    //std::cout << "Update cost " << alpha * (streamArrivalRate*1.0) * log(MVertexSizeNumTuples*1.0) << std::endl;
+    //std::cout << "Querying cost " << (1-alpha) * queryingVertxeRefFrequency*1.0 * (queryingCostCoefficient * MVertexSizeNumTuples) << std::endl;
+    //std::cout << "updateAndQueryingCost " << updateAndQueryingCost << std::endl;
+
+    if ( !(isnan(updateAndQueryingCost)) )
+        return updateAndQueryingCost;
+    else
+    {
+        std::cout << "queryingCost is NaN" << std::endl;
+        exit(0);
+    }
+ }
+
+/*
+double StreamOLAPOptimization::getUpdateAndQueryingCost(int streamArrivalRate, int MVertexSizeNumTuples, int MVertexDims, int finestVertexNumTuples, int finestVertexDims, int queryingVertexNumTuples, int queryingVertexDims,  int queryingVertxeRefFrequency, bool isQueriedNodeMaterialized, int IoA)
 {
     //std::cout << "streamArrivalRate " << streamArrivalRate << "| MVertexSizeNumTuples " << MVertexSizeNumTuples << "| queryingVertxeRefFrequency " << queryingVertxeRefFrequency << "| isQueriedNodeMaterialized " << isQueriedNodeMaterialized << "| IoA " << IoA << std::endl;
 
@@ -524,6 +631,7 @@ StreamOLAPOptimization* StreamOLAPOptimization::getInstance()
         exit(0);
     }
  }
+*/
 
 bool StreamOLAPOptimization::containAllDimensions(std::vector<std::string>& materializedVertex, std::vector<std::string>& queriedVertex)
 {

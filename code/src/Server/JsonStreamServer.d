@@ -57,6 +57,7 @@ src/Server/JsonStreamServer.o: src/Server/JsonStreamServer.cpp \
  src/Server/../Operator/../Utility/TimeCounterUtility.h \
  src/Server/../Operator/../OLAP/OLAPManager.h \
  src/Server/../Operator/../OLAP/../Utility/StreamOLAPOptimization.h \
+ src/Server/../Operator/../OLAP/../Utility/../Configure/ConfigureManager.h \
  src/Server/../Operator/../OLAP/MaterializedNode.h \
  src/Server/../Operator/../OLAP/MaterializedLattice.h \
  src/Server/../Operator/../OLAP/../OLAP/MaterializedNodeWithRelation.h \
@@ -85,7 +86,5 @@ src/Server/JsonStreamServer.o: src/Server/JsonStreamServer.cpp \
  src/Server/../Utility/CPUUtilization.h src/Server/../IO/csvOutput.h \
  src/Server/../IO/SpecifiedInputRateStreamInput.h \
  src/Server/../Query/GetJaqlQuery.h src/Server/../Parser/ParserManager.h \
- src/Server/../Schema/SchemaManager.h \
- src/Server/../Configure/ConfigureManager.h \
- src/Server/../Utility/HttpParser.h \
+ src/Server/../Schema/SchemaManager.h src/Server/../Utility/HttpParser.h \
  src/Server/../Operator/CSVLeafOperator.h

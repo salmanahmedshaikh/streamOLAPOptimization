@@ -74,6 +74,7 @@ def setConfigurationFile(outputFile, IoA, MMode, RFMode, windowSize, maxStorage,
     file2.write("OptMethod = MaxStorage" + "\n")
     file2.write("TimeGrain = Second" + "\n")
     file2.write("LatticeOutputVertices = prodID, suppID, promoID, custID, storeID, SalesPersonID" + "\n")
+    file2.write("ReadToWriteCostRatio = 1" + "\n")
     file2.close()
 
     append(outputFile, "Approach: StreamOLAP")
@@ -146,12 +147,12 @@ def main():
              #           append(file, "+++++++++++++++ MMode : " + MMode +" +++++++++++++++")
 
     for windowSize in streamWindowSizeList:
-    	append(file, "+++++++++++++++ WindowSize : " + windowSize +" +++++++++++++++")	           
+    	append(file, "+++++++++++++++ WindowSize : " + windowSize +" +++++++++++++++")
         for idx, IoA in enumerate(IoAList):
             append(file, " *********************** IoA : " + IoA +" ***************************")
             SystemExecSeconds = SystemExecSecondsList[idx]
 	    for RFMode in RFModeList:
-                append(file, "+++++++++++++++ RFMode : " + RFMode +" +++++++++++++++")  
+                append(file, "+++++++++++++++ RFMode : " + RFMode +" +++++++++++++++")
                 for MMode in MModeList:
                     append(file, "+++++++++++++++ MMode : " + MMode +" +++++++++++++++")
 		    for maxStorage in MaxStorageList:
